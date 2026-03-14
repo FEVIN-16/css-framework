@@ -1,4 +1,4 @@
-import type { ThemeConfig } from "../../config/schema";
+import type { ThemeConfig } from "../config/schema";
 
 export const spacingRules = [
   {

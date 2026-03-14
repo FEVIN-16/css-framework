@@ -1,4 +1,5 @@
 import type { Plugin, ViteDevServer } from "vite";
+import * as path from "node:path";
 import { loadConfig } from "../config/loader";
 import { extractTokens } from "../scanner/extractor";
 import { generateCSS } from "../generator";
@@ -6,20 +7,53 @@ import type { Config } from "../config/schema";
 
 export function framify(): Plugin {
   let config: Config;
+  let configFile: string | undefined;
   let server: ViteDevServer;
   let tokens = new Set<string>();
   const virtualModuleId = "virtual:framify.css";
   const resolvedVirtualModuleId = "\0" + virtualModuleId;
 
+  const invalidateModule = () => {
+    if (server) {
+      const { moduleGraph } = server;
+      const mod = moduleGraph.getModuleById(resolvedVirtualModuleId);
+      if (mod) {
+        server.moduleGraph.invalidateModule(mod);
+        // Virtual modules don't have real file URLs so the browser can't
+        // hot-swap them with css-update. A full-reload is the reliable approach.
+        server.ws.send({ type: "full-reload" });
+      }
+    }
+  };
+
   return {
     name: "vite-plugin-framify",
     
     async configResolved() {
-      config = await loadConfig();
+      const result = await loadConfig();
+      config = result.config;
+      configFile = result.configFile;
     },
 
     configureServer(_server) {
       server = _server;
+      if (configFile) {
+        server.watcher.add(configFile);
+      }
+    },
+
+    async handleHotUpdate({ file }) {
+      // Normalize paths for comparison — on Windows, Vite may use a different slash style
+      const normalizedFile = path.resolve(file).toLowerCase();
+      const normalizedConfig = configFile ? path.resolve(configFile).toLowerCase() : "";
+
+      if (normalizedFile === normalizedConfig) {
+        const result = await loadConfig();
+        config = result.config;
+        invalidateModule();
+        // Return empty array to suppress Vite's default HMR for this file
+        return [];
+      }
     },
 
     resolveId(id: string) {
@@ -47,22 +81,8 @@ export function framify(): Plugin {
         }
       }
 
-      if (changed && server) {
-        // Trigger reload of the virtual CSS module
-        const { moduleGraph } = server;
-        const mod = moduleGraph.getModuleById(resolvedVirtualModuleId);
-        if (mod) {
-          server.moduleGraph.invalidateModule(mod);
-          server.ws.send({
-            type: "update",
-            updates: [{
-              type: "css-update",
-              path: virtualModuleId,
-              acceptedPath: virtualModuleId,
-              timestamp: Date.now()
-            }]
-          });
-        }
+      if (changed) {
+        invalidateModule();
       }
     },
   };

@@ -6,7 +6,7 @@ import { extractTokens } from "../scanner/extractor";
 import { generateCSS } from "../generator";
 
 export async function build() {
-  const config = await loadConfig();
+  const { config } = await loadConfig();
   const files = await scanFiles(config);
   const allTokens = new Set<string>();
   

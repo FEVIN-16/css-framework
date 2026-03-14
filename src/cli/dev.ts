@@ -3,7 +3,7 @@ import { watchFiles } from "../watcher";
 import { build } from "./build";
 
 export async function dev() {
-  const config = await loadConfig();
+  const { config } = await loadConfig();
   console.log("Framify: Starting watch mode...");
   
   // Initial build

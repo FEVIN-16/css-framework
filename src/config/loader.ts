@@ -4,7 +4,6 @@ import { createJiti } from "jiti";
 import type { Config } from "./schema";
 import { DEFAULT_THEME } from "../theme/default";
 
-const jiti = createJiti(import.meta.url);
 
 function deepMerge(target: any, source: any) {
   for (const key in source) {
@@ -18,7 +17,7 @@ function deepMerge(target: any, source: any) {
   return target;
 }
 
-export async function loadConfig(cwd: string = process.cwd()): Promise<Config> {
+export async function loadConfig(cwd: string = process.cwd()): Promise<{ config: Config, configFile: string | undefined }> {
   const configFiles = [
     "framify.config.ts",
     "framify.config.js",
@@ -28,10 +27,16 @@ export async function loadConfig(cwd: string = process.cwd()): Promise<Config> {
 
   let userConfig: Partial<Config> = {};
 
+  // Create a fresh jiti instance on every call so the module cache is not reused.
+  // This ensures that re-importing the config file always picks up the latest changes.
+  const jiti = createJiti(import.meta.url, { moduleCache: false });
+
+  let configFile: string | undefined;
   for (const file of configFiles) {
-    const filePath = path.join(cwd, file);
+    const filePath = path.resolve(cwd, file);
     try {
       await fs.access(filePath);
+      configFile = filePath;
       // use jiti for universal loading (TS, ESM, CJS)
       const module = await jiti.import(filePath) as any;
       userConfig = module.default || module;
@@ -60,5 +65,5 @@ export async function loadConfig(cwd: string = process.cwd()): Promise<Config> {
     plugins: userConfig.plugins || [],
   };
 
-  return config;
+  return { config, configFile };
 }
