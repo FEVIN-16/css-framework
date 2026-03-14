@@ -4,6 +4,8 @@ export interface Config {
   content: string[];
   theme?: ThemeConfig;
   plugins?: FramifyPlugin[];
+  darkMode?: "media" | "selector" | ["selector", string];
+  preflight?: boolean;
 }
 
 export interface ThemeConfig {
@@ -11,6 +13,7 @@ export interface ThemeConfig {
   spacing?: Record<string, string>;
   borderRadius?: Record<string, string>;
   fontSize?: Record<string, string | [string, { lineHeight?: string, letterSpacing?: string }]>;
+  screens?: Record<string, string>;
   [key: string]: any;
 }
 

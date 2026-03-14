@@ -9,7 +9,7 @@ export function framify(): Plugin {
   let config: Config;
   let configFile: string | undefined;
   let server: ViteDevServer;
-  let tokens = new Set<string>();
+  const fileTokens = new Map<string, Set<string>>();
   const virtualModuleId = "virtual:framify.css";
   const resolvedVirtualModuleId = "\0" + virtualModuleId;
 
@@ -19,8 +19,6 @@ export function framify(): Plugin {
       const mod = moduleGraph.getModuleById(resolvedVirtualModuleId);
       if (mod) {
         server.moduleGraph.invalidateModule(mod);
-        // Virtual modules don't have real file URLs so the browser can't
-        // hot-swap them with css-update. A full-reload is the reliable approach.
         server.ws.send({ type: "full-reload" });
       }
     }
@@ -40,10 +38,18 @@ export function framify(): Plugin {
       if (configFile) {
         server.watcher.add(configFile);
       }
+      
+      // Handle file deletions to purge tokens
+      server.watcher.on("unlink", (file) => {
+        const normalizedFile = path.resolve(file);
+        if (fileTokens.has(normalizedFile)) {
+          fileTokens.delete(normalizedFile);
+          invalidateModule();
+        }
+      });
     },
 
     async handleHotUpdate({ file }) {
-      // Normalize paths for comparison — on Windows, Vite may use a different slash style
       const normalizedFile = path.resolve(file).toLowerCase();
       const normalizedConfig = configFile ? path.resolve(configFile).toLowerCase() : "";
 
@@ -51,7 +57,6 @@ export function framify(): Plugin {
         const result = await loadConfig();
         config = result.config;
         invalidateModule();
-        // Return empty array to suppress Vite's default HMR for this file
         return [];
       }
     },
@@ -64,7 +69,13 @@ export function framify(): Plugin {
 
     async load(id: string) {
       if (id === resolvedVirtualModuleId) {
-        return generateCSS(tokens, config);
+        const allTokens = new Set<string>();
+        for (const tokens of fileTokens.values()) {
+          for (const token of tokens) {
+            allTokens.add(token);
+          }
+        }
+        return generateCSS(allTokens, config);
       }
     },
 
@@ -73,15 +84,15 @@ export function framify(): Plugin {
       if (!id.match(/\.(html|js|ts|jsx|tsx|vue|svelte)$/)) return;
       
       const newTokens = extractTokens(code);
-      let changed = false;
-      for (const token of newTokens) {
-        if (!tokens.has(token)) {
-          tokens.add(token);
-          changed = true;
-        }
-      }
+      const oldTokens = fileTokens.get(id);
+
+      // Check if tokens changed for this file
+      const changed = !oldTokens || 
+        newTokens.size !== oldTokens.size || 
+        [...newTokens].some(t => !oldTokens.has(t));
 
       if (changed) {
+        fileTokens.set(id, newTokens);
         invalidateModule();
       }
     },

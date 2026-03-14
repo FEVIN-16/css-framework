@@ -14,7 +14,7 @@ export function extractTokens(content: string): Set<string> {
     const rawValue = match[1];
     if (rawValue) {
       // Split by whitespace and common separators in dynamic classes
-      const words = rawValue.match(/[a-z0-9-:_/\\\[\]'\"#%()!*]+(?<!:)/gi) || [];
+      const words = rawValue.match(/[a-z0-9-:_/\\\[\]'\"#%()!*=.@?]+(?<!:)/gi) || [];
       for (const word of words) {
         if (word && isValidToken(word)) {
           tokens.add(word);
@@ -42,5 +42,5 @@ function isValidToken(token: string): boolean {
   
   // Must be a valid CSS class name start and contain at least one letter
   // Now also allows single-word utilities like "flex", "block", "hidden"
-  return /^[a-z_][a-z0-9-_:\[\]'\"#%()!*]*$/i.test(token);
+  return /^[a-z_][a-z0-9-_:\[\]'\"#%()!*=.@?]*$/i.test(token);
 }
