@@ -2,6 +2,8 @@ import * as lightningcss from "lightningcss";
 import { UTILITY_RULES } from "./rules";
 import type { Config } from "../config/schema";
 import { resolveTheme } from "../theme/resolver";
+import { ANIMATIONS_CSS } from "../css/animations";
+import { resolveVariants } from "./variants";
 
 export function generateCSS(tokens: Set<string>, config: Config): string {
   const theme = config.theme || {};
@@ -13,7 +15,6 @@ export function generateCSS(tokens: Set<string>, config: Config): string {
     for (const plugin of config.plugins) {
       if (plugin.setup) plugin.setup(config);
       if (plugin.rules) {
-        // Plugins take precedence (added to front)
         activeRules.unshift(...plugin.rules);
       }
     }
@@ -21,18 +22,29 @@ export function generateCSS(tokens: Set<string>, config: Config): string {
 
   // 2. Add theme variables
   rules.push(resolveTheme(config.theme));
+  rules.push(ANIMATIONS_CSS);
   
   // 3. Generate utility classes
   for (const token of tokens) {
+    const parts = token.split(":");
+    const utility = parts.pop()!;
+    const variants = parts;
+
     for (const rule of activeRules) {
-      const match = token.match(rule.match);
+      const match = utility.match(rule.match);
       if (match) {
         const declaration = rule.generate(match, theme);
         if (!declaration) continue;
         
-        // Basic escaping for CSS class names (e.g. colons for hover:bg-red-500)
-        const selector = `.${token.replace(/:/g, '\\:')}`;
-        rules.push(`${selector} { ${declaration} }`);
+        // Escape the full token for the selector (all special CSS characters)
+        const baseSelector = `.${token.replace(/[!\"#$%&'()*+,.\/:;<=>?@\[\\\]^`{|}~]/g, "\\$&")}`;
+        const { selector, wrapper, extraDeclarations } = resolveVariants(variants, baseSelector);
+        
+        let ruleStr = `${selector} { ${extraDeclarations || ""}${declaration} }`;
+        if (wrapper) {
+          ruleStr = `${wrapper} { ${ruleStr} }`;
+        }
+        rules.push(ruleStr);
         break;
       }
     }

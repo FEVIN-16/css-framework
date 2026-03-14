@@ -1,7 +1,7 @@
 import { defineConfig } from "./src/config/schema";
 
 export default defineConfig({
-  content: ["./index.html", "./demo/**/*.html", "./src/**/*.{html,js,ts,jsx,tsx}"],
+  content: ["src/**/*.{ts,js,html}", "demo.html", "./demo/**/*.html", "./src/**/*.{html,js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {

@@ -2,73 +2,111 @@ import type { ThemeConfig } from "../config/schema";
 
 export const flexboxRules = [
   {
-    // Flex direction: flex-row, flex-col, etc.
+    // Direction
     match: /^flex-(row|row-reverse|col|col-reverse)$/,
-    generate: (matches: string[]) => {
-      const value = matches[1]?.replace("col", "column");
-      return `flex-direction: ${value};`;
-    }
+    generate: (matches: string[]) => `flex-direction: ${matches[1]?.replace("col", "column")};`
   },
   {
-    // Flex wrap: flex-wrap, flex-nowrap, etc.
+    // Wrap
     match: /^flex-(wrap|wrap-reverse|nowrap)$/,
+    generate: (matches: string[]) => `flex-wrap: ${matches[1]};`
+  },
+  {
+    // Flex: flex-1, flex-auto, flex-none, grow, shrink
+    match: /^(flex-(1|auto|initial|none)|grow(-0)?|shrink(-0)?)$/,
     generate: (matches: string[]) => {
-      return `flex-wrap: ${matches[1]};`;
+      const val = matches[1];
+      if (val === "grow") return "flex-grow: 1;";
+      if (val === "grow-0") return "flex-grow: 0;";
+      if (val === "shrink") return "flex-shrink: 1;";
+      if (val === "shrink-0") return "flex-shrink: 0;";
+      const flexMap: Record<string, string> = { "flex-1": "1 1 0%", "flex-auto": "1 1 auto", "flex-initial": "0 1 auto", "flex-none": "none" };
+      return `flex: ${flexMap[val!]};`;
     }
   },
   {
-    // Flex grow/shrink: flex-1, flex-auto, flex-none
-    match: /^flex-(1|auto|initial|none)$/,
-    generate: (matches: string[]) => {
-      const value = {
-        "1": "1 1 0%",
-        auto: "1 1 auto",
-        initial: "0 1 auto",
-        none: "none",
-      }[matches[1] as string];
-      return `flex: ${value};`;
+    // Basis
+    match: /^basis-(.+)$/,
+    generate: (matches: string[], theme: ThemeConfig) => {
+      const val = matches[1];
+      if (val?.includes("/")) {
+        const [num, den] = val.split("/").map(Number);
+        return `flex-basis: ${(num! / den!) * 100}%;`;
+      }
+      const value = theme.spacing?.[val!] || `var(--spacing-${val})`;
+      return `flex-basis: ${value};`;
     }
   },
   {
-    // Justify content: justify-start, justify-center, etc.
+    // Justify
     match: /^justify-(start|end|center|between|around|evenly)$/,
     generate: (matches: string[]) => {
-      const value = {
-        start: "flex-start",
-        end: "flex-end",
-        center: "center",
-        between: "space-between",
-        around: "space-around",
-        evenly: "space-evenly",
-      }[matches[1] as string];
-      return `justify-content: ${value};`;
+      const map: Record<string, string> = { start: "flex-start", end: "flex-end", center: "center", between: "space-between", around: "space-around", evenly: "space-evenly" };
+      return `justify-content: ${map[matches[1]!]};`;
     }
   },
   {
-    // Align items: items-start, items-center, etc.
+    // Items
     match: /^items-(start|end|center|baseline|stretch)$/,
     generate: (matches: string[]) => {
-      const value = {
-        start: "flex-start",
-        end: "flex-end",
-        center: "center",
-        baseline: "baseline",
-        stretch: "stretch",
-      }[matches[1] as string];
-      return `align-items: ${value};`;
+      const map: Record<string, string> = { start: "flex-start", end: "flex-end", center: "center", baseline: "baseline", stretch: "stretch" };
+      return `align-items: ${map[matches[1]!]};`;
     }
   },
   {
-    // Gap: gap-4, gap-x-2, gap-y-8
+    // Self
+    match: /^self-(auto|start|end|center|stretch|baseline)$/,
+    generate: (matches: string[]) => {
+      const map: Record<string, string> = { auto: "auto", start: "flex-start", end: "flex-end", center: "center", stretch: "stretch", baseline: "baseline" };
+      return `align-self: ${map[matches[1]!]};`
+    }
+  },
+  {
+    // Align Content
+    match: /^content-(center|start|end|between|around|evenly|baseline|stretch)$/,
+    generate: (matches: string[]) => {
+      const map: Record<string, string> = { center: "center", start: "flex-start", end: "flex-end", between: "space-between", around: "space-around", evenly: "space-evenly", baseline: "baseline", stretch: "stretch" };
+      return `align-content: ${map[matches[1]!]};`;
+    }
+  },
+  {
+    // Place Content/Items/Self
+    match: /^place-(content|items|self)-(center|start|end|between|around|evenly|baseline|stretch)$/,
+    generate: (matches: string[]) => {
+      const [, type, align] = matches;
+      const map: Record<string, string> = { center: "center", start: "start", end: "end", between: "space-between", around: "space-around", evenly: "space-evenly", baseline: "baseline", stretch: "stretch" };
+      return `place-${type}: ${map[align!]};`;
+    }
+  },
+  {
+    // Order
+    match: /^order-(first|last|none|(\d+))$/,
+    generate: (matches: string[]) => {
+      const val = matches[1];
+      if (val === "first") return "order: -9999;";
+      if (val === "last") return "order: 9999;";
+      if (val === "none") return "order: 0;";
+      return `order: ${val};`;
+    }
+  },
+  {
+    // Justify Items
+    match: /^justify-items-(start|end|center|stretch)$/,
+    generate: (matches: string[]) => `justify-items: ${matches[1]};`
+  },
+  {
+    // Justify Self
+    match: /^justify-self-(auto|start|end|center|stretch)$/,
+    generate: (matches: string[]) => `justify-self: ${matches[1]};`
+  },
+  {
+    // Gap
     match: /^gap(-x|-y)?-(.+)$/,
     generate: (matches: string[], theme: ThemeConfig) => {
       const [, axis, value] = matches;
-      if (!value) return "";
       const prop = axis === "-x" ? "column-gap" : axis === "-y" ? "row-gap" : "gap";
-      const themeValue = theme.spacing?.[value] 
-        ? `var(--spacing-${value.replace(/\./g, "\\.")})` 
-        : value;
-      return `${prop}: ${themeValue};`;
+      const spacingValue = theme.spacing?.[value!] || (value?.includes("/") ? null : `var(--spacing-${value})`) || value;
+      return `${prop}: ${spacingValue};`;
     }
   }
 ];

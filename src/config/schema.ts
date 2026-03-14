@@ -7,8 +7,10 @@ export interface Config {
 }
 
 export interface ThemeConfig {
-  colors?: Record<string, string>;
+  colors?: Record<string, string | Record<string, string>>;
   spacing?: Record<string, string>;
+  borderRadius?: Record<string, string>;
+  fontSize?: Record<string, string | [string, { lineHeight?: string, letterSpacing?: string }]>;
   [key: string]: any;
 }
 
