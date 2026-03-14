@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Framify Demo</title>
+    <link rel="stylesheet" href="../dist/framify.css">
+</head>
+<body class="bg-gray-900 text-white p-8 font-sans">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-12">
+            <h1 class="text-4xl font-bold text-primary">Framify</h1>
+            <nav class="flex gap-4">
+                <a href="#" class="text-gray-400 hover:text-white transition">Docs</a>
+                <a href="#" class="text-gray-400 hover:text-white transition">GitHub</a>
+            </nav>
+        </header>
+
+        <main class="grid gap-8">
+            <section class="p-8 bg-gray-800 rounded-xl shadow-lg border border-gray-700">
+                <h2 class="text-2xl font-semibold mb-4 text-secondary">The Power of Utility-First</h2>
+                <p class="text-gray-300 mb-6 leading-relaxed">
+                    Framify is a production-grade CSS framework built with TypeScript and Lightning CSS.
+                    It scans your code, extracts only the classes you use, and generates optimized CSS.
+                </p>
+                <div class="flex gap-4">
+                    <button class="px-6 py-2 bg-primary rounded-md font-medium shadow-md">Get Started</button>
+                    <button class="px-6 py-2 bg-gray-700 rounded-md font-medium border border-gray-600">Learn More</button>
+                </div>
+            </section>
+
+            <div class="grid flex-row gap-4">
+                <div class="p-4 bg-danger rounded-lg text-center opacity-90">Danger Alert</div>
+                <div class="p-4 bg-secondary rounded-lg text-center opacity-90">Success Message</div>
+                <div class="p-12 bg-custom rounded-full text-center shadow-xl">Custom Theme Color</div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

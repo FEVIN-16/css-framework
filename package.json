@@ -1,0 +1,40 @@
+{
+  "name": "framify",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "framify": "./dist/cli/framify.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "framify": "node dist/cli/framify.js"
+  },
+  "keywords": [
+    "css",
+    "framework",
+    "lightningcss",
+    "utility-first"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "A production-grade utility-first CSS framework powered by Lightning CSS.",
+  "dependencies": {
+    "chokidar": "^5.0.0",
+    "commander": "^14.0.3",
+    "fast-glob": "^3.3.3",
+    "jiti": "^2.6.1",
+    "lightningcss": "^1.32.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.4.0",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vite": "^6.2.0"
+  }
+}
